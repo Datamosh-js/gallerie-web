@@ -84,6 +84,8 @@ class Page extends Component {
       return;
     }
 
+    let currMoshCount = this.state.moshes.length;
+
     this.state.rawFileData.forEach(async (file, i) => {
       const formData = new FormData();
       formData.append(i, file);
@@ -107,12 +109,14 @@ class Page extends Component {
         const originBin = bufferToBinary(await file.arrayBuffer());
 
         this.setState({ isLoading: false });
+        currMoshCount++;
 
         const mosh = {
           moshURI: imgBin,
           originURI: originBin,
           name: file?.name,
           mode,
+          index: currMoshCount,
         };
 
         const moshes = this.state.moshes;
@@ -133,6 +137,14 @@ class Page extends Component {
     this.setState({
       darkMode: this.state.darkMode ? false : true,
     });
+  };
+
+  deleteMosh = (index) => {
+    console.log(`Deleting mosh at index ${index}`);
+    let moshes = this.state.moshes;
+    moshes.splice(index, 1);
+
+    this.setState({ moshes });
   };
 
   render() {
@@ -159,7 +171,10 @@ class Page extends Component {
           ? this.state.moshes.map((mosh, index) => {
               return (
                 <div key={index}>
-                  <ImageFrame mosh={mosh} />
+                  <ImageFrame
+                    mosh={mosh}
+                    deleteMosh={this.deleteMosh.bind(this, index)}
+                  />
                 </div>
               );
             })
