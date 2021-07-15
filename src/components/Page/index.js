@@ -15,7 +15,6 @@ import validateImage from "../../utils/validateImage";
 /* styles */
 import { ThemeProvider, createTheme } from "@material-ui/core/styles";
 import CssBaseLine from "@material-ui/core/CssBaseline";
-import { Button } from "@material-ui/core";
 
 const MOSH_BASE_URL = process.MOSH_BASE_URL ?? "http://localhost:3001";
 
