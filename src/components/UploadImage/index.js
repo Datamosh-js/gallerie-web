@@ -1,12 +1,16 @@
-import { Button } from 'react-bootstrap'
-import './uploadImage.css'
+import Dropzone from "react-dropzone";
 
-const UploadImage = ({ onFileChange }) => {
-  return (
-    <div id='upload-image'>
-      <input type='file' onChange={onFileChange} multiple />
-    </div>
-  )
-}
+const UploadImage = ({ onFileChange }) => (
+  <Dropzone onDrop={onFileChange}>
+    {({ getRootProps, getInputProps }) => (
+      <section>
+        <div {...getRootProps()}>
+          <input {...getInputProps()} />
+          <p>Upload</p>
+        </div>
+      </section>
+    )}
+  </Dropzone>
+);
 
-export default UploadImage
+export default UploadImage;

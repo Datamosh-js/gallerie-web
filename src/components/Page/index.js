@@ -1,159 +1,172 @@
 /* packages */
-import { Component } from 'react'
-import axios from 'axios'
-import Loader from 'react-loader-spinner';
+import { Component } from "react";
+import axios from "axios";
+import Loader from "react-loader-spinner";
 
 /* components */
-import NavBar from '../NavBar';
-import MoshMenu from '../MoshMenu'
-import ImageFrame from '../ImageFrame'
+import NavBar from "../NavBar";
+import MoshMenu from "../MoshMenu";
+import ImageFrame from "../ImageFrame";
 
 /* utilities */
-import bufferToBinary from '../../utils/bufferToBinary'
-import validateImage from '../../utils/validateImage'
+import bufferToBinary from "../../utils/bufferToBinary";
+import validateImage from "../../utils/validateImage";
 
 /* styles */
-import './page.css'
+import { ThemeProvider, createTheme } from "@material-ui/core/styles";
+import CssBaseLine from "@material-ui/core/CssBaseline";
+import { Button } from "@material-ui/core";
 
-const MOSH_BASE_URL = process.MOSH_BASE_URL ?? "http://localhost:3001"
+const MOSH_BASE_URL = process.MOSH_BASE_URL ?? "http://localhost:3001";
 
 class Page extends Component {
-    constructor(props) {
-        super(props)
+  constructor(props) {
+    super(props);
 
-        this.state = {
-            moshedImage: null,
-            rawFileData: [],
-            moshedImageURIs: [],
-            moshes: [],
-            modes: [],
-            isLoading: false
-        }
+    this.state = {
+      moshedImage: null,
+      rawFileData: [],
+      moshedImageURIs: [],
+      moshes: [],
+      modes: [],
+      isLoading: false,
+      darkMode: true,
+    };
+  }
+
+  async componentDidMount() {
+    const url = `${MOSH_BASE_URL}/modes`;
+
+    try {
+      const { data, status } = await axios.get(url);
+
+      if (status === 200) {
+        this.setState({ modes: data.modes });
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
+  onFileChange = (files) => {
+    if (!files || files.length === 0) return;
+
+    const uploadData = files;
+
+    const validatedData = [];
+    uploadData.forEach((file) => {
+      if (!validateImage(file)) {
+        console.error(`Invalid image type: ${file?.name}`);
+        return;
+      }
+
+      validatedData.push(file);
+    });
+
+    if (validatedData.length === 0) {
+      console.error("No valid images where selected!");
+      return;
     }
 
-    async componentDidMount() {
-        const url = `${MOSH_BASE_URL}/modes`
+    const rawFileData = this.state.rawFileData;
+    rawFileData.push(...validatedData);
 
-        try {
-            const { data, status } = await axios.get(url)
+    this.setState({ rawFileData });
 
-            if (status === 200) {
-                this.setState({ modes: data.modes })
-            }
-        } catch (err) {
-            console.error(err)
-        }
+    console.log(
+      `Raw file data has been added!\nfileCount=${rawFileData.length}`
+    );
+  };
+
+  onClickUpload = async (mode) => {
+    if (this.state.rawFileData.length === 0) {
+      console.log("No file data uploaded! Aborting request.");
+      return;
     }
 
-    onFileChange = ev => {
-        const uploadData = Array.from(ev.target.files);
+    this.state.rawFileData.forEach(async (file, i) => {
+      const formData = new FormData();
+      formData.append(i, file);
 
-        const validatedData = []
-        uploadData.forEach(file => {
-            if (!validateImage(file)) {
-                console.error(`Invalid image type: ${file?.name}`)
-                return
-            }
+      try {
+        this.setState({ isLoading: true });
 
-            validatedData.push(file)
-        })
+        const url = `${MOSH_BASE_URL}/mosh/${mode}`;
+        const { data, status } = await axios.post(url, formData);
 
-        if (validatedData.length === 0) {
-            console.error('No valid images where selected!')
-            return
+        if (status !== 200) {
+          console.error("Bad response when moshing...", { status });
+          return;
         }
 
-        const rawFileData = this.state.rawFileData;
-        rawFileData.push(...validatedData)
+        // clear raw data after upload (avoid spamming)
+        this.setState({ rawFileData: [] });
 
-        this.setState({ rawFileData })
+        const imgData = data.image.data;
+        const imgBin = bufferToBinary(imgData);
+        const originBin = bufferToBinary(await file.arrayBuffer());
 
-        console.log(`Raw file data has been added!\nfileCount=${rawFileData.length}`)
-    }
+        this.setState({ isLoading: false });
 
-    onClickUpload = async (mode) => {
-        if (this.state.rawFileData.length === 0) {
-            console.log('No file data uploaded! Aborting request.')
-            return
-        }
+        const mosh = {
+          moshURI: imgBin,
+          originURI: originBin,
+          name: file?.name,
+          mode,
+        };
 
-        this.state.rawFileData.forEach(async (file, i) => {
-            const formData = new FormData()
-            formData.append(i, file)
+        const moshes = this.state.moshes;
+        moshes.push(mosh);
+        this.setState({
+          moshes,
+          isLoading: false,
+        });
+      } catch (err) {
+        console.error(err);
+        this.setState({ isLoading: false });
+      }
+    });
+  };
 
-            try {
-                
-                this.setState({ isLoading: true }) 
-    
-                const url = `${MOSH_BASE_URL}/mosh/${mode}`
-                const { data, status } = await axios.post(url, formData)
-                
-                if (status !== 200) {  
-                    console.error('Bad response when moshing...', { status })
-                    return
-                }
-    
-                // clear raw data after upload (avoid spamming)
-                this.setState({ rawFileData: [] })
-    
-                const imgData = data.image.data;
-                const imgBin = bufferToBinary(imgData)
-                const originBin = bufferToBinary(await file.arrayBuffer())
-    
-                this.setState({ isLoading: false }) 
+  swapTheme = () => {
+    console.log("darkMode=", this.state.darkMode);
+    this.setState({
+      darkMode: this.state.darkMode ? false : true,
+    });
+  };
 
-                const mosh = {
-                    moshURI: imgBin,
-                    originURI: originBin,
-                    name: file?.name,
-                    mode
-                }
+  render() {
+    const theme = createTheme({
+      palette: {
+        type: this.state.darkMode ? "dark" : "light",
+      },
+    });
 
-                const moshes = this.state.moshes;
-                moshes.push(mosh)
-
-                this.setState({
-                    moshes,
-                    isLoading: false
-                })
-            } catch (err) {
-                console.error(err)
-                this.setState({ isLoading: false }) 
-            }
-        })
-    }
-
-    render () {
-        return (
-            <div id="page">
-                <NavBar/>
-                <MoshMenu
-                    onFileChange={this.onFileChange}
-                    onClickUpload={this.onClickUpload}
-                    isLoading={this.state.isLoading}
-                    modes={this.state.modes}
-                />
-                {this.state.isLoading ? 
-                    <Loader type="ThreeDots" color="#FFFFFF" height="100" width="100" /> :
-                    null
-                }
-                {this.state.moshes.length > 0 ? 
-                    this.state.moshes.map((mosh, index) => {
-                        // guess we don't need mime type? e.g. data:image;base64/png
-                        return <div key={index}>
-                            <ImageFrame
-                                mosh={mosh}
-                            />
-                        </div>
-                    })
-                 : null
-                }
-                <div>
-
+    return (
+      <ThemeProvider theme={theme}>
+        <CssBaseLine />
+        <NavBar swapTheme={this.swapTheme} darkMode={this.state.darkMode} />
+        <MoshMenu
+          onFileChange={this.onFileChange}
+          onClickUpload={this.onClickUpload}
+          isLoading={this.state.isLoading}
+          modes={this.state.modes}
+        />
+        {this.state.isLoading ? (
+          <Loader type="ThreeDots" color="#FFFFFF" height="100" width="100" />
+        ) : null}
+        {this.state.moshes.length > 0
+          ? this.state.moshes.map((mosh, index) => {
+              return (
+                <div key={index}>
+                  <ImageFrame mosh={mosh} />
                 </div>
-            </div>
-        )
-    }
+              );
+            })
+          : null}
+      </ThemeProvider>
+    );
+  }
 }
 
-export default Page
+export default Page;

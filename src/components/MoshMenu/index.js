@@ -1,31 +1,40 @@
-import { Button } from 'react-bootstrap'
-import UploadImage from '../UploadImage'
+import UploadImage from "../UploadImage";
 
-import './mosh.css'
+/* material UI */
+import Container from "@material-ui/core/Container";
+import Button from "@material-ui/core/Button";
+import Grid from "@material-ui/core/Grid";
 
-const MoshMenu = props => {
-  const { modes, onClickUpload, isLoading, onFileChange } = props
+/* styling */
+import "./mosh.css";
+
+const MoshMenu = (props) => {
+  const { modes, onClickUpload, isLoading, onFileChange } = props;
 
   return (
-    <div id='mosh-menu'>
-      <div>
-        <UploadImage onFileChange={onFileChange} />
-      </div>
-      <br />
-      <ul>
-        {modes.map((mode, i) => (
-          <li key={i}>
-            <Button
-              onClick={onClickUpload.bind(null, mode)}
-              disabled={isLoading}
-            >
-              {mode}
-            </Button>
-          </li>
-        ))}
-      </ul>
-    </div>
-  )
-}
+    <>
+      <Container maxWidth="sm" id="mosh-menu">
+        <div>
+          <UploadImage onFileChange={onFileChange} />
+        </div>
+        <br />
+        <Grid container spacing={1}>
+          {modes.map((mode, i) => (
+            <Grid item key={i}>
+              <Button
+                onClick={onClickUpload.bind(null, mode)}
+                disabled={isLoading}
+                variant="contained"
+                size="small"
+              >
+                {mode}
+              </Button>
+            </Grid>
+          ))}
+        </Grid>
+      </Container>
+    </>
+  );
+};
 
-export default MoshMenu
+export default MoshMenu;

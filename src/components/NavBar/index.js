@@ -1,14 +1,11 @@
-import './navbar.css'
+import Switch from "@material-ui/core/Switch";
 
 /* does nothing right now, lol */
-const NavBar = props => (
-  <div>
-    <ul id='nav'>
-      <li><a href='/'>🏠Home</a></li>
-      <li><a href='/gallery'>🎨Gallery</a></li>
-      <li><a href='/login'>🧙‍♂️Login</a></li>
-    </ul>
-  </div>
-)
+const NavBar = ({ swapTheme, darkMode }) => (
+  <>
+    <Switch checked={darkMode} onChange={swapTheme} />
+    {darkMode ? "Dark Mode" : "Light Mode"}
+  </>
+);
 
-export default NavBar
+export default NavBar;
