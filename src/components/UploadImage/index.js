@@ -6,7 +6,7 @@ const UploadImage = ({ onFileChange }) => (
       <section>
         <div {...getRootProps()}>
           <input {...getInputProps()} />
-          <p>Upload</p>
+          <p>Select an image!</p>
         </div>
       </section>
     )}
